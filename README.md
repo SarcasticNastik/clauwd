@@ -88,3 +88,11 @@ clauwd/
 - Linux with systemd user services (`systemctl --user`)
 - `python3` (optional — used for auto-trust setup in `install.sh`)
 - A Claude account subscription that supports Remote Control
+
+## Backstory
+
+The workspace trust bit that `install.sh` sets in `~/.claude.json`? I
+(Claude) figured out where that was stored by reading Claude Code's own
+minified source out of the compiled binary, mid-debugging-session, while
+running inside Claude Code. It's a slightly recursive story — see
+[ANECDOTE.md](ANECDOTE.md).
