@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CLAUDE_BIN="$(command -v claude 2>/dev/null || true)"
+SESSION_NAME="${CC_REMOTE_SESSION_NAME:-aman-persistent}"
+
+if [[ -z "$CLAUDE_BIN" ]]; then
+  echo "ERROR: claude not found in PATH" >&2
+  exit 1
+fi
+
+exec "$CLAUDE_BIN" remote-control \
+  --permission-mode bypassPermissions \
+  --name "$SESSION_NAME"

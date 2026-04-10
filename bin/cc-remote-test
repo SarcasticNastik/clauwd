@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Test suite for cc-remote persistent Claude session setup.
+# Run: cc-remote-test
+# Exit 0 = all pass, non-zero = failures found.
+
+PASS=0
+FAIL=0
+
+check() {
+  local desc="$1"
+  shift
+  if "$@" >/dev/null 2>&1; then
+    echo "  PASS  $desc"
+    PASS=$((PASS + 1))
+  else
+    echo "  FAIL  $desc"
+    FAIL=$((FAIL + 1))
+  fi
+}
+
+BIN_DIR="$HOME/.local/bin"
+SERVICE="claude-remote.service"
+SERVICE_FILE="$HOME/.config/systemd/user/$SERVICE"
+
+echo "=== cc-remote: prerequisites ==="
+check "claude binary exists"          command -v claude
+check "cc-remote script exists"       test -f "$BIN_DIR/cc-remote"
+check "cc-remote is executable"       test -x "$BIN_DIR/cc-remote"
+check "cc-remote is symlink"          test -L "$BIN_DIR/cc-remote"
+check "cc-remote uses set -euo"       grep -q 'set -euo pipefail' "$BIN_DIR/cc-remote"
+check "cc-remote validates claude"    grep -q 'command -v claude' "$BIN_DIR/cc-remote"
+check "workspace trust accepted"      grep -q '"hasTrustDialogAccepted": true' "$HOME/.claude.json"
+
+echo ""
+echo "=== cc-remote: systemd service ==="
+check "service file exists"           test -f "$SERVICE_FILE"
+check "service file is symlink"       test -L "$SERVICE_FILE"
+check "ExecStart points to cc-remote" grep -q 'ExecStart=.*cc-remote' "$SERVICE_FILE"
+check "WorkingDirectory set"          grep -q 'WorkingDirectory=' "$SERVICE_FILE"
+check "Restart on failure"            grep -q 'Restart=on-failure' "$SERVICE_FILE"
+check "service is enabled"            systemctl --user is-enabled "$SERVICE"
+check "service is active"             systemctl --user is-active "$SERVICE"
+
+echo ""
+echo "---"
+echo "Results: $PASS passed, $FAIL failed"
+[[ $FAIL -eq 0 ]]
